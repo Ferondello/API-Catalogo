@@ -17,62 +17,103 @@ namespace APICatalogo.Controllers
             _context = context;
         }
         [HttpGet("produtos")]
-        public ActionResult<IEnumerable<Categoria>> GetCategoriasProdutos()
+        public async Task<ActionResult<IEnumerable<Categoria>>> GetCategoriasProdutos()
         {
-            return _context.Categorias.Include(p => p.Produtos).ToList();
+            try
+            {
+                return await _context.Categorias.Include(p => p.Produtos).ToListAsync();
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Erro ao realizar sua solicitação.");
+            }
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<Produto>> Get()
+        public async Task<ActionResult<IEnumerable<Produto>>> Get()
         {
-            return _context.Produtos.ToList();
+            try
+            {
+                return await _context.Produtos.AsNoTracking().ToListAsync();
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Erro ao realizar a solicitação.");
+            }
         }
 
         [HttpGet("{id:int}", Name = "ObterCategoria")]
-        public ActionResult<Categoria> GetByID(int id)
+        public async  Task<ActionResult<Categoria>> GetByID(int id)
         {
-            var categoria = _context.Categorias.FirstOrDefault(p => p.CategoriaId == id);
-            if (categoria is null)
+            try
             {
-                return NotFound("Categoria nao encontrado");
+                var categoria = await _context.Categorias.FirstOrDefaultAsync(p => p.CategoriaId == id);
+                if (categoria is null)
+                {
+                    return NotFound("Categoria nao encontrado");
+                }
+                return Ok(categoria);
             }
-            return Ok(categoria);
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Erro inesperado ao realizar a solicitação");
+            }
         }
         [HttpPost]
-        public ActionResult Post(Categoria categoria)
+        public async Task<ActionResult> Post(Categoria categoria)
         {
-            if (categoria is null)
+            try
             {
-                return BadRequest();
+                if (categoria is null)
+                {
+                    return BadRequest();
+                }
+                await _context.Categorias.AddAsync(categoria);
+                await _context.SaveChangesAsync();
+                return new CreatedAtRouteResult("ObterCategoria", new { id = categoria.CategoriaId }, categoria);
             }
-            _context.Categorias.Add(categoria);
-            _context.SaveChanges();
-            return new CreatedAtRouteResult("ObterCategoria", new { id = categoria.CategoriaId }, categoria);
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Ocorreu um problema a tratar sua solicitação.");
+            }
         }
         [HttpPut("{id:int}")]
-        public ActionResult Put(int id, Categoria categoria)
+        public async Task<ActionResult> Put(int id, Categoria categoria)
         {
-            if(id != categoria.CategoriaId)
+            try
             {
-                return BadRequest();
-            }
+                if (id != categoria.CategoriaId)
+                {
+                    return BadRequest();
+                }
 
-            _context.Entry(categoria).State = EntityState.Modified;
-            _context.SaveChanges();
-            return Ok(categoria);
+                _context.Entry(categoria).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+                return Ok(categoria);
+            }
+            catch (Exception) 
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Erro inesperado ao realizar a inserção.");
+            }
         }
         [HttpDelete("{id:int}")]
-        public ActionResult<Categoria> Delete(int id) 
+        public async Task<ActionResult<Categoria>> Delete(int id) 
         {
-            var categoria = _context.Categorias.FirstOrDefault(c => c.CategoriaId.Equals(id));
-            if(categoria is null)
+            try
             {
-                return NotFound();
+                var categoria = await _context.Categorias.FirstOrDefaultAsync(c => c.CategoriaId.Equals(id));
+                if (categoria is null)
+                {
+                    return NotFound();
+                }
+                _context.Categorias.Remove(categoria);
+                await _context.SaveChangesAsync();
+                return Ok(categoria);
             }
-            _context.Categorias.Remove(categoria);
-            _context.SaveChanges();
-            return Ok(categoria);
-
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Erro inesperado ao realizar a deleção.");
+            }
         }
     }
 }

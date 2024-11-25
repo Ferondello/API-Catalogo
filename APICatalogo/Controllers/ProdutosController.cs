@@ -18,64 +18,96 @@ namespace APICatalogo.Controllers
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<Produto>> Get()
+        public async Task<ActionResult<IEnumerable<Produto>>> Get()
         {
-            var produtos = _context.Produtos.ToList();
-            if(produtos is null)
+            try
             {
-                return NotFound();
+                var produtos = await _context.Produtos.ToListAsync();
+                if (produtos is null)
+                {
+                    return NotFound();
+                }
+                return produtos;
             }
-            return produtos;
+            catch (Exception) 
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Erro inesperado ao realizar a solicitação."); 
+            }
         }
 
         [HttpGet("{id:int}", Name="ObterProduto")]
-        public ActionResult<Produto> GetByID(int id)
+        public async Task<ActionResult<Produto>> GetByID(int id)
         {
-            var produto = _context.Produtos.FirstOrDefault(p => p.ProdutoId == id);
-            if(produto is null)
+            try
             {
-                return NotFound("Produto nao encontrado");
+                var produto = await _context.Produtos.FirstOrDefaultAsync(p => p.ProdutoId == id);
+                if (produto is null)
+                {
+                    return NotFound("Produto nao encontrado");
+                }
+                return produto;
             }
-            return produto;
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Erro inesperado ao realizar a solicitação");
+            }
         }
         [HttpPost]
-        public ActionResult Post(Produto produto)
+        public async Task<ActionResult> Post(Produto produto)
         {
-            if(produto is null)
+            try
             {
-                return BadRequest();
+                if (produto is null)
+                {
+                    return BadRequest();
+                }
+                await _context.Produtos.AddAsync(produto);
+                await _context.SaveChangesAsync();
+                return new CreatedAtRouteResult("ObterProduto", new { id = produto.ProdutoId }, produto);
             }
-            _context.Produtos.Add(produto);
-            _context.SaveChanges();
-            return new CreatedAtRouteResult("ObterProduto", new { id = produto.ProdutoId }, produto);
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Erro inesperado ao criar produto");
+            }
         }
 
         [HttpPut("{id:int}")]
-        public ActionResult Put(int id, Produto produto)
+        public async Task<ActionResult> Put(int id, Produto produto)
         {
-            if(id != produto.ProdutoId)
+            try
             {
-                return BadRequest();
+                if (id != produto.ProdutoId)
+                {
+                    return BadRequest();
+                }
+
+                _context.Entry(produto).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+
+                return Ok(produto);
             }
-
-            _context.Entry(produto).State = EntityState.Modified;
-            _context.SaveChanges();
-
-            return Ok(produto);
+            catch (Exception) { return StatusCode(StatusCodes.Status500InternalServerError, "Erro inesperado ao realizar a inserção."); }
         }
 
         [HttpDelete("{id:int}")]
-        public ActionResult Delete(int id)
+        public async Task<ActionResult> Delete(int id)
         {
-            var produto = _context.Produtos.FirstOrDefault(p => p.ProdutoId == id);
-            if( produto is null)
+            try
             {
-                return NotFound("Produto nao localizado");
-            }
+                var produto = await _context.Produtos.FirstOrDefaultAsync(p => p.ProdutoId == id);
+                if (produto is null)
+                {
+                    return NotFound("Produto nao localizado");
+                }
 
-            _context.Produtos.Remove(produto);
-            _context.SaveChanges();
-            return Ok(produto);
+                _context.Produtos.Remove(produto);
+               await _context.SaveChangesAsync();
+                return Ok(produto);
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Erro inesperado ao realizar a deleção")
+            }
         }
     }
 }
