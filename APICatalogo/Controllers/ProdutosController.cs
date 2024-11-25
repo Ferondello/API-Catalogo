@@ -33,7 +33,7 @@ namespace APICatalogo.Controllers
             var produto = _context.Produtos.FirstOrDefault(p => p.ProdutoId == id);
             if(produto is null)
             {
-                return NotFound();
+                return NotFound("Produto nao encontrado");
             }
             return produto;
         }
