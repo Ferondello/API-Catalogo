@@ -1,4 +1,5 @@
 using APICatalogo.Context;
+using APICatalogo.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 
@@ -17,7 +18,11 @@ var MySqlConnection = builder.Configuration.GetConnectionString("DefaultConnecti
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(MySqlConnection, ServerVersion.AutoDetect(MySqlConnection)));
 
+
+builder.Services.AddTransient<IMeuServico, MeuServico>();
+
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

@@ -2,6 +2,7 @@
 using APICatalogo.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 
 namespace APICatalogo.Controllers
@@ -36,7 +37,7 @@ namespace APICatalogo.Controllers
         }
 
         [HttpGet("{id:int}", Name="ObterProduto")]
-        public async Task<ActionResult<Produto>> GetByID(int id)
+        public async Task<ActionResult<Produto>> GetByID([FromQuery] int id)
         {
             try
             {
@@ -106,7 +107,7 @@ namespace APICatalogo.Controllers
             }
             catch (Exception)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Erro inesperado ao realizar a deleção")
+                return StatusCode(StatusCodes.Status500InternalServerError, "Erro inesperado ao realizar a deleção");
             }
         }
     }
