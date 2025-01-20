@@ -18,6 +18,8 @@ var MySqlConnection = builder.Configuration.GetConnectionString("DefaultConnecti
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(MySqlConnection, ServerVersion.AutoDetect(MySqlConnection)));
 
+var valor1 = builder.Configuration["chave1"];
+var valor2 = builder.Configuration["secao1:chave2"];
 
 builder.Services.AddTransient<IMeuServico, MeuServico>();
 
