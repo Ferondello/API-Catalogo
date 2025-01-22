@@ -34,8 +34,15 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseAuthentication();
 app.UseAuthorization();
+
+app.Use(async (context, next) =>
+{
+    //adicionar codigo antes do request
+    await next(context);
+    //adicionar codigo depois do request
+});
 
 app.MapControllers();
 
