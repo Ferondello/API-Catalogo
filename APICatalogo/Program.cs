@@ -1,4 +1,5 @@
 using APICatalogo.Context;
+using APICatalogo.Filters;
 using APICatalogo.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
@@ -17,6 +18,8 @@ builder.Services.AddSwaggerGen();
 var MySqlConnection = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(MySqlConnection, ServerVersion.AutoDetect(MySqlConnection)));
+
+builder.Services.AddScoped<ApiLoggingFilter>();
 
 var valor1 = builder.Configuration["chave1"];
 var valor2 = builder.Configuration["secao1:chave2"];
