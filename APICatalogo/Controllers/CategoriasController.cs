@@ -14,12 +14,13 @@ namespace APICatalogo.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly ILogger _logger;
 
-
-        public CategoriasController(AppDbContext context, IConfiguration configuration)
+        public CategoriasController(AppDbContext context, IConfiguration configuration, ILogger logger)
         {
             _context = context;
             _configuration = configuration;
+            _logger = logger;
         }
         [HttpGet("LerArquivoConfiguracao")]
         public string GetValores()
@@ -42,6 +43,7 @@ namespace APICatalogo.Controllers
         {
             try
             {
+                _logger.LogInformation("================= GET api/categorias/produtos ===============");
                 return await _context.Categorias.Include(p => p.Produtos).ToListAsync();
             }
             catch (Exception)
@@ -56,6 +58,7 @@ namespace APICatalogo.Controllers
         {
             try
             {
+                _logger.LogInformation("================= GET api/categorias ===============");
                 return await _context.Categorias.AsNoTracking().ToListAsync();
             }
             catch (Exception)
