@@ -12,103 +12,84 @@ namespace APICatalogo.Controllers
     public class ProdutosController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly ILogger _logger;
 
-        public ProdutosController(AppDbContext context)
+        public ProdutosController(AppDbContext context, ILogger logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Produto>>> Get()
         {
-            try
+            var produtos = await _context.Produtos.ToListAsync();
+            if (produtos is null)
             {
-                var produtos = await _context.Produtos.ToListAsync();
-                if (produtos is null)
-                {
-                    return NotFound();
-                }
-                return produtos;
+                _logger.LogWarning("Produto não encontrado...");
+                return NotFound("Produto não encontrado...");
             }
-            catch (Exception) 
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Erro inesperado ao realizar a solicitação."); 
-            }
+            return produtos;
+
         }
 
-        [HttpGet("{id:int}", Name="ObterProduto")]
+        [HttpGet("{id:int}", Name = "ObterProduto")]
         public async Task<ActionResult<Produto>> GetByID([FromQuery] int id)
         {
-            try
+            var produto = await _context.Produtos.FirstOrDefaultAsync(p => p.ProdutoId == id);
+            if (produto is null)
             {
-                var produto = await _context.Produtos.FirstOrDefaultAsync(p => p.ProdutoId == id);
-                if (produto is null)
-                {
-                    return NotFound("Produto nao encontrado");
-                }
-                return produto;
+                _logger.LogWarning($"Produto de ID= {id} não encontrado...");
+                return NotFound($"Produto de ID= {id} não encontrado...");
             }
-            catch (Exception)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Erro inesperado ao realizar a solicitação");
-            }
+            return produto;
+
         }
         [HttpPost]
-        public async Task<ActionResult> Post(Produto produto)
+        public ActionResult Post(Produto produto)
         {
-            try
+            if (produto is null)
             {
-                if (produto is null)
-                {
-                    return BadRequest();
-                }
-                await _context.Produtos.AddAsync(produto);
-                await _context.SaveChangesAsync();
-                return new CreatedAtRouteResult("ObterProduto", new { id = produto.ProdutoId }, produto);
+                _logger.LogWarning("Dados inválidos...");
+                return BadRequest("Dados incálidos...");
             }
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Erro inesperado ao criar produto");
-            }
+            _context.Produtos.Add(produto);
+            _context.SaveChanges();
+            return new CreatedAtRouteResult("ObterProduto", new { id = produto.ProdutoId }, produto);
+
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult> Put(int id, Produto produto)
+        public ActionResult Put(int id, Produto produto)
         {
-            try
+            if (id != produto.ProdutoId)
             {
-                if (id != produto.ProdutoId)
-                {
-                    return BadRequest();
-                }
-
-                _context.Entry(produto).State = EntityState.Modified;
-                await _context.SaveChangesAsync();
-
-                return Ok(produto);
+                _logger.LogWarning($"Nenhum produto com ID= {id}");
+                return BadRequest($"Nenhum produto com ID= {id}");
             }
-            catch (Exception) { return StatusCode(StatusCodes.Status500InternalServerError, "Erro inesperado ao realizar a inserção."); }
+
+            _context.Entry(produto).State = EntityState.Modified;
+            _context.SaveChanges();
+
+            return Ok(produto);
+
         }
 
         [HttpDelete("{id:int}")]
-        public async Task<ActionResult> Delete(int id)
+        public ActionResult Delete(int id)
         {
-            try
-            {
-                var produto = await _context.Produtos.FirstOrDefaultAsync(p => p.ProdutoId == id);
-                if (produto is null)
-                {
-                    return NotFound("Produto nao localizado");
-                }
 
-                _context.Produtos.Remove(produto);
-               await _context.SaveChangesAsync();
-                return Ok(produto);
-            }
-            catch (Exception)
+            var produto = _context.Produtos.FirstOrDefault(p => p.ProdutoId == id);
+            if (produto is null)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, "Erro inesperado ao realizar a deleção");
+                _logger.LogWarning($"Nenhum produto encontrado com ID= {id}");
+                return NotFound($"Nenhum produto encontrado com ID= {id}");
             }
+
+            _context.Produtos.Remove(produto);
+            _context.SaveChanges();
+            return Ok(produto);
+
         }
     }
 }
