@@ -12,7 +12,7 @@ namespace APICatalogo.Logging
             this.loggerConfig = loggerConfig;
         }
 
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull
+        public IDisposable BeginScope<TState>(TState state)
         {
             return null;
         }
@@ -32,7 +32,7 @@ namespace APICatalogo.Logging
         private void EscreverTextoNoArquivo(string message)
         {
             string filePath = @"c:\dados\log\arquivo_log.txt";
-            using (StreamWriter sw = new StreamWriter(filePath, true))
+            using (StreamWriter sw = new StreamWriter(filePath))
             {
                 try
                 {
