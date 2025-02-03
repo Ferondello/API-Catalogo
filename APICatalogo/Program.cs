@@ -1,6 +1,7 @@
 using APICatalogo.Context;
 using APICatalogo.Filters;
 using APICatalogo.Logging;
+using APICatalogo.Repositories;
 using APICatalogo.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
@@ -25,7 +26,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(MySqlConnection, ServerVersion.AutoDetect(MySqlConnection)));
 
 builder.Services.AddScoped<ApiLoggingFilter>();
-
+builder.Services.AddScoped<ICategoriaRepository, CategoriaRepository>();
 
 
 builder.Services.AddTransient<IMeuServico, MeuServico>();
