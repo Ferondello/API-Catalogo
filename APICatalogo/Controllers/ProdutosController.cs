@@ -1,5 +1,6 @@
 ﻿using APICatalogo.Context;
 using APICatalogo.Models;
+using APICatalogo.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -11,38 +12,38 @@ namespace APICatalogo.Controllers
     [ApiController]
     public class ProdutosController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IProdutoRepository _repository;
         private readonly ILogger<ProdutosController> _logger;
 
-        public ProdutosController(AppDbContext context, ILogger<ProdutosController> logger)
+        public ProdutosController(IProdutoRepository repository, ILogger<ProdutosController> logger)
         {
-            _context = context;
+            _repository = repository;
             _logger = logger;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Produto>>> Get()
+        public ActionResult<IEnumerable<Produto>> Get()
         {
-            var produtos = await _context.Produtos.ToListAsync();
+            var produtos = _repository.GetProdutos().ToList();
             if (produtos is null)
             {
                 _logger.LogWarning("Produto não encontrado...");
                 return NotFound("Produto não encontrado...");
             }
-            return produtos;
+            return Ok(produtos);
 
         }
 
         [HttpGet("{id:int}", Name = "ObterProduto")]
-        public async Task<ActionResult<Produto>> GetByID([FromQuery] int id)
+        public ActionResult<Produto> Get(int id)
         {
-            var produto = await _context.Produtos.FirstOrDefaultAsync(p => p.ProdutoId == id);
+            var produto = _repository.GetProduto(id);
             if (produto is null)
             {
                 _logger.LogWarning($"Produto de ID= {id} não encontrado...");
                 return NotFound($"Produto de ID= {id} não encontrado...");
             }
-            return produto;
+            return Ok(produto);
 
         }
         [HttpPost]
@@ -53,9 +54,8 @@ namespace APICatalogo.Controllers
                 _logger.LogWarning("Dados inválidos...");
                 return BadRequest("Dados incálidos...");
             }
-            _context.Produtos.Add(produto);
-            _context.SaveChanges();
-            return new CreatedAtRouteResult("ObterProduto", new { id = produto.ProdutoId }, produto);
+            var novoProduto = _repository.Create(produto);
+            return new CreatedAtRouteResult("ObterProduto", new { id = novoProduto.ProdutoId }, novoProduto);
 
         }
 
@@ -65,30 +65,33 @@ namespace APICatalogo.Controllers
             if (id != produto.ProdutoId)
             {
                 _logger.LogWarning($"Nenhum produto com ID= {id}");
-                return BadRequest($"Nenhum produto com ID= {id}");
+                return BadRequest($"Nenhum produto com ID= {id}");//400
             }
 
-            _context.Entry(produto).State = EntityState.Modified;
-            _context.SaveChanges();
-
-            return Ok(produto);
+            bool atualizado =_repository.Update(produto);
+            if(atualizado)
+            {
+                return Ok(produto);
+            }
+            else
+            {
+                return StatusCode(500, $"Falha ao atualiazr o produto de ID = {id}");
+            }
 
         }
 
         [HttpDelete("{id:int}")]
         public ActionResult Delete(int id)
         {
-
-            var produto = _context.Produtos.FirstOrDefault(p => p.ProdutoId == id);
-            if (produto is null)
+            bool deletado = _repository.Delete(id);
+            if (deletado)
             {
-                _logger.LogWarning($"Nenhum produto encontrado com ID= {id}");
-                return NotFound($"Nenhum produto encontrado com ID= {id}");
+                return Ok($"Produto de ID ={id} foi excluido");
             }
-
-            _context.Produtos.Remove(produto);
-            _context.SaveChanges();
-            return Ok(produto);
+            else
+            {
+                return StatusCode(500, $"Falha ao excluir produto de ID = {id}");
+            }
 
         }
     }
