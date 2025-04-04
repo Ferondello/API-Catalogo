@@ -13,7 +13,7 @@ namespace APICatalogo.Controllers
     [ApiController]
     public class CategoriasController : ControllerBase
     {
-        private readonly ICategoriaRepository _repository;
+        private readonly IRepository<Categoria> _repository;
         private readonly ILogger<CategoriasController> _logger;
 
         public CategoriasController(ICategoriaRepository repository, ILogger<CategoriasController> logger)
@@ -25,7 +25,7 @@ namespace APICatalogo.Controllers
         [HttpGet]
         public ActionResult<IEnumerable<Categoria>> Get()
         {
-            var categorias = _repository.GetCategorias();
+            var categorias = _repository.GetAll();
             return Ok(categorias);
         }
 
@@ -33,7 +33,7 @@ namespace APICatalogo.Controllers
         public  ActionResult<Categoria> GetByID(int id)
         {
 
-            var categoria = _repository.GetCategoria(id);
+            var categoria = _repository.Get(c=> c.CategoriaId == id);
             if (categoria is null)
             {
                 _logger.LogWarning($"Categoria com o ID= {id} não encontrada");
@@ -52,9 +52,9 @@ namespace APICatalogo.Controllers
                 return BadRequest("Dados Inválidos...");
             }
 
-            _repository.Create(categoria);
+            var categoriaCriada = _repository.Create(categoria);
 
-            return new CreatedAtRouteResult("ObterCategoria", new { id = categoria.CategoriaId }, categoria);
+            return new CreatedAtRouteResult("ObterCategoria", new { id = categoriaCriada.CategoriaId }, categoriaCriada);
         }
         [HttpPut("{id:int}")]
         public ActionResult Put(int id, Categoria categoria)
@@ -73,13 +73,13 @@ namespace APICatalogo.Controllers
         [HttpDelete("{id:int}")]
         public ActionResult Delete(int id) 
         {
-            var categoria = _repository.GetCategoria(id);
+            var categoria = _repository.Get(c=> c.CategoriaId == id);
             if (categoria is null)
             {
                 _logger.LogWarning($"Categoria com ID= {id} não encontrada...");
                 return NotFound($"Categoria com ID= {id} não encontrada...");
             }
-            var categoriaExcluida = _repository.Delete(id);
+            var categoriaExcluida = _repository.Delete(categoria);
             return Ok(categoriaExcluida);
         }
     }
